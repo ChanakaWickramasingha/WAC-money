@@ -33,6 +33,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".screens.AddTransactionActivity"
+            android:exported="false"
+            android:label="Add Transaction" />
+        <activity
+            android:name=".screens.TransactionListActivity"
+            android:exported="false"
+            android:label="Transactions" />
     </application>
 
 </manifest>
