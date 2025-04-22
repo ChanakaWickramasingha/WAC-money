@@ -6,29 +6,26 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.wac_money.R
+import com.example.wac_money.data.Transaction
 import com.example.wac_money.data.TransactionDatabase
-import com.example.wac_money.model.Transaction
-import com.example.wac_money.model.TransactionType
 import com.example.wac_money.screens.AddTransactionActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import java.text.SimpleDateFormat
-import java.util.*
 
 class TransactionsFragment : Fragment() {
     companion object {
         private const val TAG = "TransactionsFragment"
     }
 
+    private lateinit var transactionAdapter: TransactionAdapter
     private lateinit var transactionDatabase: TransactionDatabase
     private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: TransactionAdapter
-    private lateinit var emptyView: TextView
-    private val dateFormatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    private lateinit var emptyView: View
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -40,117 +37,121 @@ class TransactionsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d(TAG, "onViewCreated called")
 
-        // Initialize database
-        transactionDatabase = TransactionDatabase(requireContext())
+        try {
+            transactionDatabase = TransactionDatabase(requireContext())
+            Log.d(TAG, "TransactionDatabase initialized")
 
-        // Initialize views
-        recyclerView = view.findViewById(R.id.transactionsList)
-        emptyView = view.findViewById(R.id.emptyView)
+            recyclerView = view.findViewById(R.id.transactionsList)
+            emptyView = view.findViewById(R.id.emptyView)
+            Log.d(TAG, "Views initialized")
 
-        // Set up RecyclerView
-        setupRecyclerView()
-
-        // Find the FAB and set click listener
-        val addTransactionFab = view.findViewById<FloatingActionButton>(R.id.addTransactionFab)
-        addTransactionFab.setOnClickListener {
-            Log.d(TAG, "Add transaction FAB clicked")
-            navigateToAddTransaction()
+            setupRecyclerView()
+            setupFab(view)
+            loadTransactions()
+            Log.d(TAG, "Setup completed successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in onViewCreated", e)
+            Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
         }
+    }
 
-        // Load transactions
-        loadTransactions()
+    private fun setupRecyclerView() {
+        try {
+            transactionAdapter = TransactionAdapter(
+                onUpdateClick = { transaction -> handleUpdateClick(transaction) },
+                onDeleteClick = { transaction -> handleDeleteClick(transaction) }
+            )
+
+            recyclerView.apply {
+                layoutManager = LinearLayoutManager(context)
+                adapter = transactionAdapter
+            }
+            Log.d(TAG, "RecyclerView setup completed")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting up RecyclerView", e)
+            Toast.makeText(requireContext(), "Error setting up list: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun setupFab(view: View) {
+        try {
+            view.findViewById<FloatingActionButton>(R.id.addTransactionFab).setOnClickListener {
+                startActivity(Intent(context, AddTransactionActivity::class.java))
+            }
+            Log.d(TAG, "FAB setup completed")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting up FAB", e)
+            Toast.makeText(requireContext(), "Error setting up add button: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun loadTransactions() {
+        try {
+            Log.d(TAG, "Starting to load transactions")
+            val transactions = transactionDatabase.getAllTransactions()
+            Log.d(TAG, "Retrieved ${transactions.size} transactions from database")
+
+            if (transactions.isEmpty()) {
+                Log.d(TAG, "No transactions found, showing empty view")
+                emptyView.visibility = View.VISIBLE
+                recyclerView.visibility = View.GONE
+            } else {
+                Log.d(TAG, "Submitting ${transactions.size} transactions to adapter")
+                transactionAdapter.submitList(transactions)
+                emptyView.visibility = View.GONE
+                recyclerView.visibility = View.VISIBLE
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading transactions", e)
+            Toast.makeText(requireContext(), "Error loading transactions: ${e.message}", Toast.LENGTH_LONG).show()
+            // Show empty view on error
+            emptyView.visibility = View.VISIBLE
+            recyclerView.visibility = View.GONE
+        }
+    }
+
+    private fun handleUpdateClick(transaction: Transaction) {
+        try {
+            val intent = Intent(context, AddTransactionActivity::class.java).apply {
+                putExtra(AddTransactionActivity.EXTRA_TRANSACTION_ID, transaction.id)
+                putExtra(AddTransactionActivity.EXTRA_TITLE, transaction.title)
+                putExtra(AddTransactionActivity.EXTRA_AMOUNT, transaction.amount)
+                putExtra(AddTransactionActivity.EXTRA_CATEGORY, transaction.category)
+                putExtra(AddTransactionActivity.EXTRA_TYPE, transaction.type)
+                putExtra(AddTransactionActivity.EXTRA_DATE, transaction.date.time)
+                putExtra(AddTransactionActivity.EXTRA_NOTE, transaction.note)
+            }
+            startActivity(intent)
+            Log.d(TAG, "Started update for transaction ${transaction.id}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error handling update click", e)
+            Toast.makeText(requireContext(), "Error updating transaction: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun handleDeleteClick(transaction: Transaction) {
+        try {
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.delete_transaction)
+                .setMessage(R.string.delete_transaction_confirmation)
+                .setPositiveButton(R.string.delete) { _, _ ->
+                    transactionDatabase.deleteTransaction(transaction.id)
+                    loadTransactions()
+                    Log.d(TAG, "Deleted transaction ${transaction.id}")
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error handling delete click", e)
+            Toast.makeText(requireContext(), "Error deleting transaction: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        Log.d(TAG, "onResume called")
         loadTransactions()
-    }
-
-    private fun setupRecyclerView() {
-        adapter = TransactionAdapter(emptyList()) { transaction ->
-            // Handle transaction click (edit)
-            val intent = Intent(requireContext(), AddTransactionActivity::class.java)
-            intent.putExtra("transaction_id", transaction.id)
-            startActivity(intent)
-        }
-
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = adapter
-    }
-
-    private fun loadTransactions() {
-        val transactions = transactionDatabase.getAllTransactions()
-        adapter.updateTransactions(transactions)
-
-        if (transactions.isEmpty()) {
-            emptyView.visibility = View.VISIBLE
-            recyclerView.visibility = View.GONE
-        } else {
-            emptyView.visibility = View.GONE
-            recyclerView.visibility = View.VISIBLE
-        }
-    }
-
-    private fun navigateToAddTransaction() {
-        try {
-            val intent = Intent(requireContext(), AddTransactionActivity::class.java)
-            startActivity(intent)
-            Log.d(TAG, "Navigated to AddTransactionActivity")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error navigating to AddTransactionActivity", e)
-        }
-    }
-
-    inner class TransactionAdapter(
-        private var transactions: List<Transaction>,
-        private val onItemClick: (Transaction) -> Unit
-    ) : RecyclerView.Adapter<TransactionAdapter.TransactionViewHolder>() {
-
-        fun updateTransactions(newTransactions: List<Transaction>) {
-            transactions = newTransactions
-            notifyDataSetChanged()
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TransactionViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_transaction, parent, false)
-            return TransactionViewHolder(view)
-        }
-
-        override fun onBindViewHolder(holder: TransactionViewHolder, position: Int) {
-            val transaction = transactions[position]
-            holder.bind(transaction)
-        }
-
-        override fun getItemCount(): Int = transactions.size
-
-        inner class TransactionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-            private val titleTextView: TextView = itemView.findViewById(R.id.transactionTitle)
-            private val amountTextView: TextView = itemView.findViewById(R.id.transactionAmount)
-            private val categoryTextView: TextView = itemView.findViewById(R.id.transactionCategory)
-            private val dateTextView: TextView = itemView.findViewById(R.id.transactionDate)
-            private val typeTextView: TextView = itemView.findViewById(R.id.transactionType)
-
-            fun bind(transaction: Transaction) {
-                titleTextView.text = transaction.title
-                amountTextView.text = String.format("$%.2f", transaction.amount)
-                categoryTextView.text = transaction.category
-                dateTextView.text = dateFormatter.format(transaction.date)
-                typeTextView.text = transaction.type.name
-
-                // Set color based on transaction type
-                val colorRes = if (transaction.type == TransactionType.INCOME) {
-                    R.color.income_green
-                } else {
-                    R.color.expense_red
-                }
-                amountTextView.setTextColor(resources.getColor(colorRes, null))
-
-                itemView.setOnClickListener {
-                    onItemClick(transaction)
-                }
-            }
-        }
     }
 }

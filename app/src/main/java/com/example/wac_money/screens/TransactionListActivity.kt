@@ -12,9 +12,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.wac_money.R
+import com.example.wac_money.data.Transaction
 import com.example.wac_money.data.TransactionDatabase
-import com.example.wac_money.model.Transaction
-import com.example.wac_money.model.TransactionType
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.text.SimpleDateFormat
 import java.util.*
@@ -51,7 +50,7 @@ class TransactionListActivity : AppCompatActivity() {
         adapter = TransactionAdapter(emptyList()) { transaction ->
             // Handle transaction click (edit)
             val intent = Intent(this, AddTransactionActivity::class.java)
-            intent.putExtra("transaction_id", transaction.id)
+            intent.putExtra(AddTransactionActivity.EXTRA_TRANSACTION_ID, transaction.id)
             startActivity(intent)
         }
 
@@ -127,10 +126,10 @@ class TransactionListActivity : AppCompatActivity() {
                 amountTextView.text = String.format("$%.2f", transaction.amount)
                 categoryTextView.text = transaction.category
                 dateTextView.text = dateFormatter.format(transaction.date)
-                typeTextView.text = transaction.type.name
+                typeTextView.text = transaction.type
 
                 // Set color based on transaction type
-                val colorRes = if (transaction.type == TransactionType.INCOME) {
+                val colorRes = if (transaction.type == "INCOME") {
                     R.color.income_green
                 } else {
                     R.color.expense_red
@@ -148,14 +147,14 @@ class TransactionListActivity : AppCompatActivity() {
             }
 
             private fun showDeleteDialog(transaction: Transaction) {
-                AlertDialog.Builder(itemView.context)
-                    .setTitle("Delete Transaction")
-                    .setMessage("Are you sure you want to delete this transaction?")
-                    .setPositiveButton("Delete") { _, _ ->
+                AlertDialog.Builder(this@TransactionListActivity)
+                    .setTitle(R.string.delete_transaction)
+                    .setMessage(R.string.delete_transaction_confirmation)
+                    .setPositiveButton(R.string.delete) { _, _ ->
                         transactionDatabase.deleteTransaction(transaction.id)
                         loadTransactions()
                     }
-                    .setNegativeButton("Cancel", null)
+                    .setNegativeButton(R.string.cancel, null)
                     .show()
             }
         }
