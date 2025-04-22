@@ -8,11 +8,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.wac_money.data.DashboardRepository
 import com.example.wac_money.data.Transaction
+import com.example.wac_money.util.CurrencyFormatter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.NumberFormat
-import java.util.Locale
 
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
     companion object {
@@ -20,6 +20,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private val repository = DashboardRepository(application)
+    private val currencyFormatter = CurrencyFormatter.getInstance(application)
 
     // LiveData for UI updates
     private val _totalBalance = MutableLiveData<String>()
@@ -40,11 +41,15 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
 
-    // Currency formatter
-    private val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US)
-
     init {
         loadDashboardData()
+        // Listen for currency changes
+        viewModelScope.launch {
+            currencyFormatter.currencyChangeEvents.collectLatest {
+                Log.d(TAG, "Currency changed to: ${it.currencyCode}")
+                loadDashboardData() // Reload data with new currency
+            }
+        }
     }
 
     /**

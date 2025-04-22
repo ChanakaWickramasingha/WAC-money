@@ -8,11 +8,13 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.wac_money.data.BudgetProgress
 import com.example.wac_money.data.BudgetRepository
+import com.example.wac_money.data.DashboardRepository
+import com.example.wac_money.data.Transaction
+import com.example.wac_money.util.CurrencyFormatter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.NumberFormat
-import java.util.Locale
 
 class BudgetViewModel(application: Application) : AndroidViewModel(application) {
     companion object {
@@ -20,7 +22,10 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private val repository = BudgetRepository(application)
+    private val dashboardRepository = DashboardRepository(application)
+    private val currencyFormatter = CurrencyFormatter.getInstance(application)
 
+    // LiveData for UI updates
     private val _budgetProgress = MutableLiveData<BudgetProgress>()
     val budgetProgress: LiveData<BudgetProgress> = _budgetProgress
 
@@ -29,6 +34,9 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _spendingByCategory = MutableLiveData<Map<String, Double>>()
     val spendingByCategory: LiveData<Map<String, Double>> = _spendingByCategory
+
+    private val _recentTransactions = MutableLiveData<List<Transaction>>()
+    val recentTransactions: LiveData<List<Transaction>> = _recentTransactions
 
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
@@ -39,81 +47,89 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     private val _success = MutableLiveData<String>()
     val success: LiveData<String> = _success
 
-    // Currency formatter
-    private val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US)
-
     init {
-        loadBudgetProgress()
+        loadBudgetData()
+        // Listen for currency changes
+        viewModelScope.launch {
+            currencyFormatter.currencyChangeEvents.collectLatest {
+                Log.d(TAG, "Currency changed to: ${it.currencyCode}")
+                loadBudgetData() // Reload data with new currency
+            }
+        }
     }
 
-    fun loadBudgetProgress() {
+    /**
+     * Load all budget data
+     */
+    fun loadBudgetData() {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                val progress = withContext(Dispatchers.IO) {
-                    repository.getBudgetProgress()
-                }
-                _budgetProgress.value = progress
 
-                // Update remaining budget
-                val remaining = withContext(Dispatchers.IO) {
-                    repository.getRemainingBudget()
-                }
-                _remainingBudget.value = formatCurrency(remaining)
+                withContext(Dispatchers.IO) {
+                    // Get budget progress
+                    val progress = repository.getBudgetProgress()
+                    _budgetProgress.postValue(progress)
 
-                // Update spending by category
-                val categorySpending = withContext(Dispatchers.IO) {
-                    repository.getSpendingByCategory()
-                }
-                _spendingByCategory.value = categorySpending
+                    // Get remaining budget
+                    val remaining = repository.getRemainingBudget()
+                    _remainingBudget.postValue(formatCurrency(remaining))
 
-                _isLoading.value = false
-                Log.d(TAG, "Budget progress loaded successfully")
+                    // Get spending by category
+                    val spending = repository.getSpendingByCategory()
+                    _spendingByCategory.postValue(spending)
+
+                    // Get recent transactions
+                    val recent = dashboardRepository.getRecentTransactions()
+                    _recentTransactions.postValue(recent)
+
+                    _isLoading.postValue(false)
+                }
+
+                Log.d(TAG, "Budget data loaded successfully")
             } catch (e: Exception) {
-                Log.e(TAG, "Error loading budget progress", e)
-                _error.value = "Error loading budget progress: ${e.message}"
+                Log.e(TAG, "Error loading budget data", e)
+                _error.value = "Error loading budget data: ${e.message}"
                 _isLoading.value = false
             }
         }
     }
 
+    /**
+     * Save a new budget
+     */
     fun saveBudget(amount: Double) {
         viewModelScope.launch {
             try {
-                Log.d(TAG, "Starting to save budget: $amount")
                 _isLoading.value = true
-                _error.value = "" // Clear any previous error message
-                _success.value = "" // Clear any previous success message
 
-                // Save the budget to the database
-                val savedBudget = withContext(Dispatchers.IO) {
-                    Log.d(TAG, "Saving budget to database on IO thread")
+                withContext(Dispatchers.IO) {
                     repository.saveBudget(amount)
+                    _success.postValue("Budget saved successfully")
+                    loadBudgetData() // Reload data after saving
                 }
-                Log.d(TAG, "Budget saved to database: ${savedBudget.amount}")
 
-                // Load updated budget progress
-                Log.d(TAG, "Loading updated budget progress")
-                loadBudgetProgress()
-
-                // Set success message after everything is complete
-                _success.value = "Budget saved successfully"
-                Log.d(TAG, "Budget save operation completed successfully")
+                Log.d(TAG, "Budget saved successfully")
             } catch (e: Exception) {
                 Log.e(TAG, "Error saving budget", e)
                 _error.value = "Error saving budget: ${e.message}"
             } finally {
                 _isLoading.value = false
-                Log.d(TAG, "Loading state set to false")
             }
         }
     }
 
-    fun formatCurrency(amount: Double): String {
+    /**
+     * Format a double value as currency
+     */
+    private fun formatCurrency(amount: Double): String {
         return currencyFormatter.format(amount)
     }
 
+    /**
+     * Refresh budget data
+     */
     fun refresh() {
-        loadBudgetProgress()
+        loadBudgetData()
     }
 }
