@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.wac_money.R
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -22,6 +23,8 @@ class SettingsFragment : Fragment() {
 
     private lateinit var viewModel: SettingsViewModel
     private lateinit var currencyDropdown: MaterialAutoCompleteTextView
+    private lateinit var addCurrencyButton: MaterialButton
+    private var selectedCurrency: Currency? = null
 
     // Available currencies
     private val currencies = listOf(
@@ -64,9 +67,13 @@ class SettingsFragment : Fragment() {
 
             // Initialize views
             currencyDropdown = view.findViewById(R.id.currencyDropdown)
+            addCurrencyButton = view.findViewById(R.id.addCurrencyButton)
 
             // Setup currency dropdown
             setupCurrencyDropdown()
+
+            // Setup add button
+            setupAddButton()
 
             // Observe ViewModel
             observeViewModel()
@@ -90,13 +97,30 @@ class SettingsFragment : Fragment() {
 
             // Set click listener for currency selection
             currencyDropdown.setOnItemClickListener { _, _, position, _ ->
-                val selectedCurrency = currencies[position]
+                selectedCurrency = currencies[position]
                 Log.d(TAG, "Currency selected: $selectedCurrency")
-                viewModel.updateCurrency(selectedCurrency.code, selectedCurrency.symbol)
+                // Don't update the currency immediately, wait for the Add button click
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error setting up currency dropdown", e)
             Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun setupAddButton() {
+        addCurrencyButton.setOnClickListener {
+            try {
+                if (selectedCurrency != null) {
+                    Log.d(TAG, "Add button clicked, updating currency: $selectedCurrency")
+                    viewModel.updateCurrency(selectedCurrency!!.code, selectedCurrency!!.symbol)
+                } else {
+                    Log.w(TAG, "Add button clicked but no currency selected")
+                    Toast.makeText(requireContext(), getString(R.string.select_currency_first), Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error handling add button click", e)
+                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
     }
 

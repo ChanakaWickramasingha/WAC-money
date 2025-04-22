@@ -10,4 +10,6 @@
     <string name="currency_updated">Currency updated successfully</string>
     <string name="error_loading_settings">Error loading settings: %s</string>
     <string name="error_updating_currency">Error updating currency: %s</string>
+    <string name="add">Add</string>
+    <string name="select_currency_first">Please select a currency first</string>
 </resources>
