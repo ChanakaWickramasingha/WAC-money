@@ -125,7 +125,7 @@ class TransactionListActivity : AppCompatActivity() {
             fun bind(transaction: Transaction) {
                 titleTextView.text = transaction.title
                 amountTextView.text = String.format("$%.2f", transaction.amount)
-                categoryTextView.text = transaction.category.name
+                categoryTextView.text = transaction.category
                 dateTextView.text = dateFormatter.format(transaction.date)
                 typeTextView.text = transaction.type.name
 

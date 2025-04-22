@@ -1,49 +1,42 @@
 package com.example.wac_money.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.wac_money.model.Transaction
-import com.example.wac_money.model.TransactionCategory
 import com.example.wac_money.model.TransactionType
-import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTransactionScreen(
-    onTransactionSaved: (Transaction) -> Unit,
-    onNavigateBack: () -> Unit
+    onTransactionAdded: (Transaction) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf<TransactionCategory?>(null) }
-    var selectedDate by remember { mutableStateOf(Date()) }
-    var isIncome by remember { mutableStateOf(false) }
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showCategoryDropdown by remember { mutableStateOf(false) }
+    var category by remember { mutableStateOf("") }
+    var type by remember { mutableStateOf(TransactionType.EXPENSE) }
+    var note by remember { mutableStateOf("") }
 
-    val dateFormatter = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
-    val scrollState = rememberScrollState()
+    val categories = listOf(
+        "Food & Dining",
+        "Transportation",
+        "Shopping",
+        "Entertainment",
+        "Bills & Utilities",
+        "Health & Fitness",
+        "Education",
+        "Travel",
+        "Other"
+    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-            .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Add Transaction",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
         OutlinedTextField(
             value = title,
             onValueChange = { title = it },
@@ -51,75 +44,85 @@ fun AddTransactionScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
+        Spacer(modifier = Modifier.height(8.dp))
+
         OutlinedTextField(
             value = amount,
             onValueChange = { amount = it },
             label = { Text("Amount") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             modifier = Modifier.fillMaxWidth()
         )
 
+        Spacer(modifier = Modifier.height(8.dp))
+
         ExposedDropdownMenuBox(
-            expanded = showCategoryDropdown,
-            onExpandedChange = { showCategoryDropdown = it }
+            expanded = false,
+            onExpandedChange = { }
         ) {
             OutlinedTextField(
-                value = selectedCategory?.name ?: "",
-                onValueChange = {},
+                value = category,
+                onValueChange = { },
                 readOnly = true,
                 label = { Text("Category") },
                 modifier = Modifier.fillMaxWidth()
             )
 
             ExposedDropdownMenu(
-                expanded = showCategoryDropdown,
-                onDismissRequest = { showCategoryDropdown = false }
+                expanded = false,
+                onDismissRequest = { }
             ) {
-                TransactionCategory.values().forEach { category ->
+                categories.forEach { categoryOption ->
                     DropdownMenuItem(
-                        text = { Text(category.name) },
-                        onClick = {
-                            selectedCategory = category
-                            showCategoryDropdown = false
-                        }
+                        text = { Text(categoryOption) },
+                        onClick = { category = categoryOption }
                     )
                 }
             }
         }
 
-        OutlinedTextField(
-            value = dateFormatter.format(selectedDate),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Date") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        Spacer(modifier = Modifier.height(8.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Text("Transaction Type")
-            Switch(
-                checked = isIncome,
-                onCheckedChange = { isIncome = it }
-            )
+            TransactionType.values().forEach { transactionType ->
+                FilterChip(
+                    selected = type == transactionType,
+                    onClick = { type = transactionType },
+                    label = { Text(transactionType.name) }
+                )
+            }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = note,
+            onValueChange = { note = it },
+            label = { Text("Note (Optional)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
-                val transaction = Transaction(
-                    title = title,
-                    amount = amount.toDoubleOrNull() ?: 0.0,
-                    category = selectedCategory ?: TransactionCategory.OTHER,
-                    date = selectedDate,
-                    type = if (isIncome) TransactionType.INCOME else TransactionType.EXPENSE
-                )
-                onTransactionSaved(transaction)
-                onNavigateBack()
+                val amountValue = amount.toDoubleOrNull()
+                if (title.isNotBlank() && amountValue != null && category.isNotBlank()) {
+                    val transaction = Transaction(
+                        id = 0,
+                        title = title,
+                        amount = amountValue,
+                        category = category,
+                        date = Date(),
+                        type = type,
+                        note = note.takeIf { it.isNotBlank() }
+                    )
+                    onTransactionAdded(transaction)
+                }
             },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = title.isNotBlank() && amount.isNotBlank() && selectedCategory != null
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text("Save Transaction")
         }
