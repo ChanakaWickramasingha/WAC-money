@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -26,6 +27,7 @@ class BudgetFragment : Fragment() {
     private lateinit var saveBudgetButton: MaterialButton
     private lateinit var warningText: View
     private lateinit var progressIndicator: CircularProgressIndicator
+    private lateinit var contentLayout: LinearLayout
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,13 +52,20 @@ class BudgetFragment : Fragment() {
             budgetInput = view.findViewById(R.id.budgetInput)
             saveBudgetButton = view.findViewById(R.id.saveBudgetButton)
             warningText = view.findViewById(R.id.warningText)
+            contentLayout = view.findViewById(R.id.contentLayout)
 
             // Add progress indicator
             progressIndicator = CircularProgressIndicator(requireContext()).apply {
                 isIndeterminate = true
                 visibility = View.GONE
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    gravity = android.view.Gravity.CENTER
+                }
             }
-            (view as ViewGroup).addView(progressIndicator)
+            contentLayout.addView(progressIndicator)
 
             // Setup click listeners
             setupClickListeners()
@@ -74,11 +83,23 @@ class BudgetFragment : Fragment() {
     private fun setupClickListeners() {
         saveBudgetButton.setOnClickListener {
             try {
-                val amount = budgetInput.text.toString().toDoubleOrNull()
+                Log.d(TAG, "Save budget button clicked")
+                val inputText = budgetInput.text.toString()
+                Log.d(TAG, "Input text: $inputText")
+
+                if (inputText.isEmpty()) {
+                    budgetInputLayout.error = "Please enter an amount"
+                    return@setOnClickListener
+                }
+
+                val amount = inputText.toDoubleOrNull()
                 if (amount != null && amount > 0) {
+                    Log.d(TAG, "Saving budget: $amount")
+                    budgetInput.clearFocus() // Clear focus before saving
                     viewModel.saveBudget(amount)
-                    budgetInput.text?.clear()
+                    budgetInputLayout.error = null
                 } else {
+                    Log.e(TAG, "Invalid amount: $inputText")
                     budgetInputLayout.error = "Please enter a valid amount"
                 }
             } catch (e: Exception) {
@@ -92,31 +113,34 @@ class BudgetFragment : Fragment() {
         try {
             // Observe budget progress
             viewModel.budgetProgress.observe(viewLifecycleOwner) { progress ->
+                Log.d(TAG, "Budget progress updated: budget=${progress.budget?.amount}, spending=${progress.spending}, progress=${progress.progress}")
                 budgetGauge.updateProgress(progress)
                 warningText.visibility = if (progress.isWarning || progress.isExceeded) View.VISIBLE else View.GONE
-                Log.d(TAG, "Budget progress updated: ${progress.progress}")
+                Log.d(TAG, "Budget gauge updated with progress: ${progress.progress}")
             }
 
             // Observe loading state
             viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+                Log.d(TAG, "Loading state updated: $isLoading")
                 progressIndicator.visibility = if (isLoading) View.VISIBLE else View.GONE
                 saveBudgetButton.isEnabled = !isLoading
-                Log.d(TAG, "Loading state updated: $isLoading")
+                budgetInput.isEnabled = !isLoading
             }
 
             // Observe error
             viewModel.error.observe(viewLifecycleOwner) { error ->
                 if (error.isNotEmpty()) {
-                    Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show()
                     Log.e(TAG, "Error observed: $error")
+                    Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show()
                 }
             }
 
             // Observe success
             viewModel.success.observe(viewLifecycleOwner) { success ->
                 if (success.isNotEmpty()) {
-                    Toast.makeText(requireContext(), success, Toast.LENGTH_SHORT).show()
                     Log.d(TAG, "Success observed: $success")
+                    Toast.makeText(requireContext(), success, Toast.LENGTH_SHORT).show()
+                    budgetInput.text?.clear() // Clear input on success
                 }
             }
         } catch (e: Exception) {

@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
 
+    <!-- ONLY ONE DIRECT CHILD (LinearLayout) -->
     <LinearLayout
+        android:id="@+id/contentLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -20,6 +23,7 @@
             android:textSize="24sp"
             android:textStyle="bold" />
 
+        <!-- This is where your custom BudgetGaugeView will be placed -->
         <com.example.wac_money.ui.budget.BudgetGaugeView
             android:id="@+id/budgetGauge"
             android:layout_width="match_parent"
@@ -64,5 +68,4 @@
             tools:visibility="visible" />
 
     </LinearLayout>
-
 </androidx.core.widget.NestedScrollView>

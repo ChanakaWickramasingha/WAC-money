@@ -15,15 +15,31 @@ class BudgetRepository(private val context: Context) {
 
     fun saveBudget(amount: Double): Budget {
         try {
+            Log.d(TAG, "Saving budget: $amount")
             val calendar = Calendar.getInstance()
+            val month = calendar.get(Calendar.MONTH) + 1
+            val year = calendar.get(Calendar.YEAR)
+            Log.d(TAG, "Current month: $month, year: $year")
+
             val budget = Budget(
                 amount = amount,
-                month = calendar.get(Calendar.MONTH) + 1,
-                year = calendar.get(Calendar.YEAR)
+                month = month,
+                year = year
             )
+
             val id = budgetDatabase.saveBudget(budget)
             Log.d(TAG, "Budget saved with id: $id")
-            return budget.copy(id = id)
+
+            // Verify the budget was saved by retrieving it
+            val savedBudget = budgetDatabase.getCurrentBudget()
+            if (savedBudget != null) {
+                Log.d(TAG, "Verified budget was saved: ${savedBudget.amount}")
+            } else {
+                Log.e(TAG, "Budget was not saved properly")
+                throw Exception("Failed to verify budget was saved")
+            }
+
+            return savedBudget
         } catch (e: Exception) {
             Log.e(TAG, "Error saving budget", e)
             throw e
@@ -96,6 +112,45 @@ class BudgetRepository(private val context: Context) {
                 isWarning = false,
                 isExceeded = false
             )
+        }
+    }
+
+    fun getRemainingBudget(): Double {
+        try {
+            val budget = getCurrentBudget()
+            val spending = getCurrentSpending()
+
+            return if (budget != null) {
+                (budget.amount - spending).coerceAtLeast(0.0)
+            } else {
+                0.0
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting remaining budget", e)
+            return 0.0
+        }
+    }
+
+    fun getSpendingByCategory(): Map<String, Double> {
+        try {
+            val calendar = Calendar.getInstance()
+            val currentMonth = calendar.get(Calendar.MONTH) + 1
+            val currentYear = calendar.get(Calendar.YEAR)
+
+            return transactionDatabase.getAllTransactions()
+                .filter { transaction ->
+                    val transactionDate = Calendar.getInstance().apply {
+                        time = transaction.date
+                    }
+                    transaction.isExpense() &&
+                    transactionDate.get(Calendar.MONTH) + 1 == currentMonth &&
+                    transactionDate.get(Calendar.YEAR) == currentYear
+                }
+                .groupBy { it.category }
+                .mapValues { it.value.sumOf { transaction -> transaction.amount } }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting spending by category", e)
+            return emptyMap()
         }
     }
 }

@@ -46,7 +46,22 @@ class BudgetDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
     fun saveBudget(budget: Budget): Long {
         var db: SQLiteDatabase? = null
         try {
+            Log.d(TAG, "Opening database for writing")
             db = writableDatabase
+
+            // Start a transaction
+            db.beginTransaction()
+            Log.d(TAG, "Transaction started")
+
+            // First, delete any existing budget for the same month and year
+            val deletedRows = db.delete(
+                TABLE_BUDGET,
+                "$COLUMN_MONTH = ? AND $COLUMN_YEAR = ?",
+                arrayOf(budget.month.toString(), budget.year.toString())
+            )
+            Log.d(TAG, "Deleted $deletedRows existing budgets for month ${budget.month}, year ${budget.year}")
+
+            // Now insert the new budget
             val values = ContentValues().apply {
                 put(COLUMN_AMOUNT, budget.amount)
                 put(COLUMN_MONTH, budget.month)
@@ -56,13 +71,31 @@ class BudgetDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             }
 
             val id = db.insert(TABLE_BUDGET, null, values)
-            Log.d(TAG, "Budget saved with id: $id")
+            if (id != -1L) {
+                Log.d(TAG, "Budget saved with id: $id")
+            } else {
+                Log.e(TAG, "Failed to save budget")
+                db.endTransaction()
+                throw Exception("Failed to save budget")
+            }
+
+            // Mark the transaction as successful
+            db.setTransactionSuccessful()
+            Log.d(TAG, "Transaction marked as successful")
+
+            // End the transaction
+            db.endTransaction()
+            Log.d(TAG, "Transaction ended")
+
             return id
         } catch (e: Exception) {
             Log.e(TAG, "Error saving budget", e)
+            // Make sure to end the transaction even if there's an error
+            db?.endTransaction()
             throw e
         } finally {
             db?.close()
+            Log.d(TAG, "Database connection closed")
         }
     }
 
@@ -76,6 +109,8 @@ class BudgetDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             val currentMonth = calendar.get(java.util.Calendar.MONTH) + 1
             val currentYear = calendar.get(java.util.Calendar.YEAR)
 
+            Log.d(TAG, "Getting current budget for month: $currentMonth, year: $currentYear")
+
             cursor = db.query(
                 TABLE_BUDGET,
                 null,
@@ -88,20 +123,30 @@ class BudgetDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             )
 
             return if (cursor.moveToFirst()) {
+                val id = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_ID))
+                val amount = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_AMOUNT))
+                val month = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_MONTH))
+                val year = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_YEAR))
+                val createdAtStr = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATED_AT))
+                val createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                    .parse(createdAtStr) ?: Date()
+
+                Log.d(TAG, "Found budget: id=$id, amount=$amount, month=$month, year=$year")
+
                 Budget(
-                    id = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_ID)),
-                    amount = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_AMOUNT)),
-                    month = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_MONTH)),
-                    year = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_YEAR)),
-                    createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                        .parse(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATED_AT))) ?: Date()
+                    id = id,
+                    amount = amount,
+                    month = month,
+                    year = year,
+                    createdAt = createdAt
                 )
             } else {
+                Log.d(TAG, "No budget found for current month and year")
                 null
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting current budget", e)
-            throw e
+            return null
         } finally {
             cursor?.close()
             db?.close()

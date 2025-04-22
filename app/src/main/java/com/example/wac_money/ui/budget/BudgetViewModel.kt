@@ -24,6 +24,12 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     private val _budgetProgress = MutableLiveData<BudgetProgress>()
     val budgetProgress: LiveData<BudgetProgress> = _budgetProgress
 
+    private val _remainingBudget = MutableLiveData<String>()
+    val remainingBudget: LiveData<String> = _remainingBudget
+
+    private val _spendingByCategory = MutableLiveData<Map<String, Double>>()
+    val spendingByCategory: LiveData<Map<String, Double>> = _spendingByCategory
+
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
@@ -48,6 +54,19 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                     repository.getBudgetProgress()
                 }
                 _budgetProgress.value = progress
+
+                // Update remaining budget
+                val remaining = withContext(Dispatchers.IO) {
+                    repository.getRemainingBudget()
+                }
+                _remainingBudget.value = formatCurrency(remaining)
+
+                // Update spending by category
+                val categorySpending = withContext(Dispatchers.IO) {
+                    repository.getSpendingByCategory()
+                }
+                _spendingByCategory.value = categorySpending
+
                 _isLoading.value = false
                 Log.d(TAG, "Budget progress loaded successfully")
             } catch (e: Exception) {
@@ -61,17 +80,31 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     fun saveBudget(amount: Double) {
         viewModelScope.launch {
             try {
+                Log.d(TAG, "Starting to save budget: $amount")
                 _isLoading.value = true
-                withContext(Dispatchers.IO) {
+                _error.value = "" // Clear any previous error message
+                _success.value = "" // Clear any previous success message
+
+                // Save the budget to the database
+                val savedBudget = withContext(Dispatchers.IO) {
+                    Log.d(TAG, "Saving budget to database on IO thread")
                     repository.saveBudget(amount)
                 }
+                Log.d(TAG, "Budget saved to database: ${savedBudget.amount}")
+
+                // Load updated budget progress
+                Log.d(TAG, "Loading updated budget progress")
                 loadBudgetProgress()
+
+                // Set success message after everything is complete
                 _success.value = "Budget saved successfully"
-                Log.d(TAG, "Budget saved successfully")
+                Log.d(TAG, "Budget save operation completed successfully")
             } catch (e: Exception) {
                 Log.e(TAG, "Error saving budget", e)
                 _error.value = "Error saving budget: ${e.message}"
+            } finally {
                 _isLoading.value = false
+                Log.d(TAG, "Loading state set to false")
             }
         }
     }

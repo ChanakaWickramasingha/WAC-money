@@ -118,8 +118,8 @@ class AddTransactionActivity : AppCompatActivity() {
     private fun loadTransaction(id: Long) {
         try {
             Log.d(TAG, "Loading transaction with ID: $id")
-            val transaction = transactionDatabase.getTransaction(id)
-            if (transaction != null) {
+        val transaction = transactionDatabase.getTransaction(id)
+        if (transaction != null) {
                 titleEditText.setText(transaction.title)
                 amountEditText.setText(transaction.amount.toString())
                 // Update category and type spinners
@@ -127,8 +127,8 @@ class AddTransactionActivity : AppCompatActivity() {
                 categoryAutoComplete?.setText(transaction.category, false)
                 val typeAutoComplete = typeSpinner.editText as? AutoCompleteTextView
                 typeAutoComplete?.setText(transaction.type, false)
-                selectedDate = transaction.date
-                updateDateDisplay()
+            selectedDate = transaction.date
+            updateDateDisplay()
                 noteEditText.setText(transaction.note)
                 Log.d(TAG, "Transaction loaded successfully")
             } else {
@@ -181,24 +181,24 @@ class AddTransactionActivity : AppCompatActivity() {
     private fun setupDatePicker() {
         try {
             dateButton.setOnClickListener {
-                val calendar = Calendar.getInstance()
-                calendar.time = selectedDate
+            val calendar = Calendar.getInstance()
+            calendar.time = selectedDate
 
                 val year = calendar.get(Calendar.YEAR)
                 val month = calendar.get(Calendar.MONTH)
                 val day = calendar.get(Calendar.DAY_OF_MONTH)
 
-                DatePickerDialog(
-                    this,
+            DatePickerDialog(
+                this,
                     { _, selectedYear, selectedMonth, selectedDay ->
                         calendar.set(selectedYear, selectedMonth, selectedDay)
-                        selectedDate = calendar.time
-                        updateDateDisplay()
-                    },
+                    selectedDate = calendar.time
+                    updateDateDisplay()
+                },
                     year,
                     month,
                     day
-                ).show()
+            ).show()
             }
             Log.d(TAG, "Date picker setup completed")
         } catch (e: Exception) {
@@ -213,7 +213,7 @@ class AddTransactionActivity : AppCompatActivity() {
 
     private fun setupSaveButton() {
         try {
-            saveButton.setOnClickListener {
+        saveButton.setOnClickListener {
                 saveTransaction()
             }
             Log.d(TAG, "Save button setup completed")
@@ -246,11 +246,11 @@ class AddTransactionActivity : AppCompatActivity() {
 
             val transaction = Transaction(
                 id = transactionId ?: 0,
-                title = title,
-                amount = amount,
-                category = category,
+                    title = title,
+                    amount = amount,
+                    category = category,
                 type = type,
-                date = selectedDate,
+                    date = selectedDate,
                 note = note
             )
 
@@ -264,7 +264,7 @@ class AddTransactionActivity : AppCompatActivity() {
                 Log.d(TAG, "Transaction added with ID: $id")
             }
 
-            finish()
+                finish()
         } catch (e: Exception) {
             Log.e(TAG, "Error saving transaction", e)
             Toast.makeText(this, "Error saving transaction: ${e.message}", Toast.LENGTH_LONG).show()

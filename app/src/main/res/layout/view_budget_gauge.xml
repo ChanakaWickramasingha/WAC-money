@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/progressIndicator"
@@ -15,10 +14,10 @@
         app:trackColor="@color/primary_dark"
         app:trackThickness="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintDimensionRatio="1:1" />
+        app:layout_constraintTop_toTopOf="parent"/>
 
     <TextView
         android:id="@+id/progressText"
@@ -30,8 +29,7 @@
         app:layout_constraintBottom_toBottomOf="@id/progressIndicator"
         app:layout_constraintEnd_toEndOf="@id/progressIndicator"
         app:layout_constraintStart_toStartOf="@id/progressIndicator"
-        app:layout_constraintTop_toTopOf="@id/progressIndicator"
-        tools:text="75%" />
+        app:layout_constraintTop_toTopOf="@id/progressIndicator"/>
 
     <TextView
         android:id="@+id/spentAmount"
@@ -42,8 +40,7 @@
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/progressIndicator"
-        tools:text="Spent: $750" />
+        app:layout_constraintTop_toBottomOf="@id/progressIndicator"/>
 
     <TextView
         android:id="@+id/budgetAmount"
@@ -54,7 +51,18 @@
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/spentAmount"
-        tools:text="Budget: $1000" />
+        app:layout_constraintTop_toBottomOf="@id/spentAmount"/>
 
+    <TextView
+        android:id="@+id/remainingAmount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Remaining: $250"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/income_green"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/budgetAmount"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
