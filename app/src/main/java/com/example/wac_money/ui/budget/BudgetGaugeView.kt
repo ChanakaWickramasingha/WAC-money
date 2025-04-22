@@ -9,6 +9,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.wac_money.R
 import com.example.wac_money.data.BudgetProgress
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import java.text.DecimalFormat
 
 class BudgetGaugeView @JvmOverloads constructor(
     context: Context,
@@ -25,6 +26,7 @@ class BudgetGaugeView @JvmOverloads constructor(
     private val spentAmount: TextView
     private val budgetAmount: TextView
     private val remainingAmount: TextView
+    private val currencyFormatter = DecimalFormat("$#,##0.00")
 
     init {
         LayoutInflater.from(context).inflate(R.layout.view_budget_gauge, this, true)
@@ -68,6 +70,6 @@ class BudgetGaugeView @JvmOverloads constructor(
     }
 
     private fun formatCurrency(amount: Double): String {
-        return java.text.NumberFormat.getCurrencyInstance().format(amount)
+        return currencyFormatter.format(amount)
     }
 }
