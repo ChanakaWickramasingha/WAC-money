@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fillViewport="true">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:padding="16dp">
 
         <TextView
@@ -14,72 +17,52 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Monthly Budget"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <com.example.wac_money.ui.budget.BudgetGaugeView
+            android:id="@+id/budgetGauge"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:minHeight="300dp" />
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/budgetAmountLayout"
+            android:id="@+id/budgetInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="Budget Amount"
-            app:layout_constraintTop_toBottomOf="@id/monthlyBudgetTitle">
+            android:layout_marginTop="24dp"
+            android:hint="Set Monthly Budget"
+            app:prefixText="$">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/budgetAmountInput"
+                android:id="@+id/budgetInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="numberDecimal" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <TextView
-            android:id="@+id/spendingProgressTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Spending Progress"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/budgetAmountLayout" />
-
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/spendingProgress"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/saveBudgetButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:layout_constraintTop_toBottomOf="@id/spendingProgressTitle" />
+            android:text="Save Budget" />
 
         <TextView
-            android:id="@+id/spendingAmount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Spent: $0.00 / $0.00"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/spendingProgress" />
-
-        <TextView
-            android:id="@+id/categoryBudgetsTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Category Budgets"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/spendingAmount" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/categoryBudgetsList"
+            android:id="@+id/warningText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:layout_constraintTop_toBottomOf="@id/categoryBudgetsTitle" />
+            android:gravity="center"
+            android:textColor="@color/warning_yellow"
+            android:visibility="gone"
+            tools:text="Warning: You are approaching your budget limit!"
+            tools:visibility="visible" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>
