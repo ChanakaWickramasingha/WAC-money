@@ -4,4 +4,10 @@
     <string name="delete_transaction_confirmation">Are you sure you want to delete this transaction?</string>
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
+    <string name="budget_amount_format">Budget: %s</string>
+    <string name="currency_settings">Currency Settings</string>
+    <string name="currency">Currency</string>
+    <string name="currency_updated">Currency updated successfully</string>
+    <string name="error_loading_settings">Error loading settings: %s</string>
+    <string name="error_updating_currency">Error updating currency: %s</string>
 </resources>
