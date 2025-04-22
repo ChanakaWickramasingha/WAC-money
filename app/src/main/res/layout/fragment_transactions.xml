@@ -11,6 +11,15 @@
         android:padding="16dp"
         android:clipToPadding="false" />
 
+    <TextView
+        android:id="@+id/emptyView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="No transactions yet.\nTap the + button to add one."
+        android:textAlignment="center"
+        android:visibility="gone" />
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/addTransactionFab"
         android:layout_width="wrap_content"

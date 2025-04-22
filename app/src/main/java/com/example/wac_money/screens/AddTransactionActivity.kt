@@ -23,6 +23,7 @@ class AddTransactionActivity : AppCompatActivity() {
     private lateinit var typeSpinner: TextInputLayout
     private lateinit var noteEditText: TextInputEditText
     private lateinit var saveButton: MaterialButton
+    private lateinit var dateButton: MaterialButton
     private lateinit var db: TransactionDatabase
 
     private val categories = listOf(
@@ -63,6 +64,7 @@ class AddTransactionActivity : AppCompatActivity() {
                 typeSpinner = findViewById(R.id.typeSpinner)
                 noteEditText = findViewById(R.id.noteEditText)
                 saveButton = findViewById(R.id.saveButton)
+                dateButton = findViewById(R.id.dateButton)
                 android.util.Log.d("AddTransactionActivity", "Views initialized successfully")
             } catch (e: Exception) {
                 android.util.Log.e("AddTransactionActivity", "Error initializing views", e)
@@ -80,6 +82,9 @@ class AddTransactionActivity : AppCompatActivity() {
 
             // Set up category dropdown
             setupCategoryDropdown()
+
+            // Set up type dropdown
+            setupTypeDropdown()
 
             // Set up date picker
             setupDatePicker()
@@ -123,12 +128,45 @@ class AddTransactionActivity : AppCompatActivity() {
         categoryAutoComplete?.setAdapter(categoryAdapter)
     }
 
+    private fun setupTypeDropdown() {
+        val types = TransactionType.values().map { it.name }
+        val typeAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_dropdown_item_1line,
+            types
+        )
+        val typeAutoComplete = typeSpinner.editText as? AutoCompleteTextView
+        typeAutoComplete?.setAdapter(typeAdapter)
+
+        // Set default value to EXPENSE
+        typeAutoComplete?.setText(TransactionType.EXPENSE.name, false)
+    }
+
     private fun setupDatePicker() {
-        // Implementation of setupDatePicker method
+        dateButton.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            calendar.time = selectedDate
+
+            val year = calendar.get(Calendar.YEAR)
+            val month = calendar.get(Calendar.MONTH)
+            val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+            val datePickerDialog = DatePickerDialog(
+                this,
+                { _, selectedYear, selectedMonth, selectedDay ->
+                    calendar.set(selectedYear, selectedMonth, selectedDay)
+                    selectedDate = calendar.time
+                    updateDateDisplay()
+                },
+                year, month, day
+            )
+
+            datePickerDialog.show()
+        }
     }
 
     private fun updateDateDisplay() {
-        // Implementation of updateDateDisplay method
+        dateButton.text = dateFormatter.format(selectedDate)
     }
 
     private fun setupSaveButton() {
