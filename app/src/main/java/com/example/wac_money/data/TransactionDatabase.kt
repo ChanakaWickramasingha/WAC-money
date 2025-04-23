@@ -12,7 +12,7 @@ class TransactionDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE
     companion object {
         private const val TAG = "TransactionDatabase"
         private const val DATABASE_NAME = "transactions.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
         private const val TABLE_NAME = "transactions"
 
         private const val COLUMN_ID = "id"

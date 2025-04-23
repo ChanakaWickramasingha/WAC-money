@@ -9,7 +9,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.wac_money.data.BudgetProgress
 import com.example.wac_money.data.BudgetRepository
 import com.example.wac_money.data.DashboardRepository
+import com.example.wac_money.data.PreferencesManager
 import com.example.wac_money.data.Transaction
+import com.example.wac_money.notifications.BudgetNotificationManager
 import com.example.wac_money.util.CurrencyFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -19,11 +21,14 @@ import kotlinx.coroutines.withContext
 class BudgetViewModel(application: Application) : AndroidViewModel(application) {
     companion object {
         private const val TAG = "BudgetViewModel"
+        private const val WARNING_THRESHOLD = 0.8 // 80% of budget
     }
 
     private val repository = BudgetRepository(application)
     private val dashboardRepository = DashboardRepository(application)
     private val currencyFormatter = CurrencyFormatter.getInstance(application)
+    private val preferencesManager = PreferencesManager(application)
+    private val notificationManager = BudgetNotificationManager(application)
 
     // LiveData for UI updates
     private val _budgetProgress = MutableLiveData<BudgetProgress>()
@@ -83,6 +88,11 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                     val recent = dashboardRepository.getRecentTransactions()
                     _recentTransactions.postValue(recent)
 
+                    // Check if notifications are enabled and show appropriate alerts
+                    if (preferencesManager.budgetAlertsEnabled) {
+                        checkAndShowBudgetAlerts(progress)
+                    }
+
                     _isLoading.postValue(false)
                 }
 
@@ -91,6 +101,30 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                 Log.e(TAG, "Error loading budget data", e)
                 _error.value = "Error loading budget data: ${e.message}"
                 _isLoading.value = false
+            }
+        }
+    }
+
+    private fun checkAndShowBudgetAlerts(progress: BudgetProgress) {
+        if (progress.budget == null) return
+
+        val percentage = progress.progress * 100
+        val remaining = progress.budget.amount - progress.spending
+
+        when {
+            progress.isExceeded -> {
+                notificationManager.showBudgetAlert(
+                    remainingAmount = remaining,
+                    percentage = percentage,
+                    isExceeded = true
+                )
+            }
+            progress.isWarning -> {
+                notificationManager.showBudgetAlert(
+                    remainingAmount = remaining,
+                    percentage = percentage,
+                    isExceeded = false
+                )
             }
         }
     }
