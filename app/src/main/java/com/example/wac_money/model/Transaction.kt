@@ -3,23 +3,14 @@ package com.example.wac_money.model
 import java.util.Date
 
 data class Transaction(
-    val id: String = java.util.UUID.randomUUID().toString(),
+    val id: Long = 0,
     val title: String,
     val amount: Double,
-    val category: TransactionCategory,
+    val type: TransactionType,
+    val category: String,
     val date: Date,
-    val type: TransactionType
+    val note: String? = null
 )
-
-enum class TransactionCategory {
-    FOOD,
-    RENT,
-    SALARY,
-    TRANSPORTATION,
-    ENTERTAINMENT,
-    UTILITIES,
-    OTHER
-}
 
 enum class TransactionType {
     INCOME,

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/navigation_dashboard">
+
+    <fragment
+        android:id="@+id/navigation_dashboard"
+        android:name="com.example.wac_money.ui.dashboard.DashboardFragment"
+        android:label="Dashboard" />
+
+    <fragment
+        android:id="@+id/navigation_transactions"
+        android:name="com.example.wac_money.ui.transactions.TransactionsFragment"
+        android:label="Transactions" />
+
+    <fragment
+        android:id="@+id/navigation_budget"
+        android:name="com.example.wac_money.ui.budget.BudgetFragment"
+        android:label="Budget" />
+
+    <fragment
+        android:id="@+id/navigation_settings"
+        android:name="com.example.wac_money.ui.settings.SettingsFragment"
+        android:label="Settings" />
+
+</navigation>
