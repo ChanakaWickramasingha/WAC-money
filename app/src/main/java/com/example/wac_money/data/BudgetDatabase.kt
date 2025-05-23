@@ -152,4 +152,66 @@ class BudgetDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
             db?.close()
         }
     }
+
+    fun getAllBudgets(): List<Budget> {
+        var db: SQLiteDatabase? = null
+        var cursor: android.database.Cursor? = null
+        val budgets = mutableListOf<Budget>()
+
+        try {
+            db = readableDatabase
+            cursor = db.query(
+                TABLE_BUDGET,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "$COLUMN_YEAR DESC, $COLUMN_MONTH DESC"
+            )
+
+            while (cursor.moveToNext()) {
+                val id = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_ID))
+                val amount = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_AMOUNT))
+                val month = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_MONTH))
+                val year = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_YEAR))
+                val createdAtStr = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CREATED_AT))
+                val createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                    .parse(createdAtStr) ?: Date()
+
+                budgets.add(
+                    Budget(
+                        id = id,
+                        amount = amount,
+                        month = month,
+                        year = year,
+                        createdAt = createdAt
+                    )
+                )
+            }
+
+            Log.d(TAG, "Retrieved ${budgets.size} budgets")
+            return budgets
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting all budgets", e)
+            return emptyList()
+        } finally {
+            cursor?.close()
+            db?.close()
+        }
+    }
+
+    fun clearAllBudgets() {
+        var db: SQLiteDatabase? = null
+        try {
+            db = writableDatabase
+            db.delete(TABLE_BUDGET, null, null)
+            Log.d(TAG, "All budgets cleared")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error clearing budgets", e)
+            throw e
+        } finally {
+            db?.close()
+        }
+    }
 }

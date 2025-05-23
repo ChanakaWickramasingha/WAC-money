@@ -203,4 +203,18 @@ class TransactionDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE
             throw e
         }
     }
+
+    fun clearAllTransactions() {
+        var db: SQLiteDatabase? = null
+        try {
+            db = writableDatabase
+            db.delete(TABLE_NAME, null, null)
+            Log.d(TAG, "All transactions cleared")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error clearing transactions", e)
+            throw e
+        } finally {
+            db?.close()
+        }
+    }
 }

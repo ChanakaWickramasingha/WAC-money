@@ -40,7 +40,7 @@ android {
         viewBinding = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.11" // Latest version
+        kotlinCompilerExtensionVersion = "1.5.7" // Updated to match Kotlin 1.9.21
     }
 }
 
